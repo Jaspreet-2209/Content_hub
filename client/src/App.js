@@ -3,7 +3,7 @@ import Shepherd from "shepherd.js";
 import "shepherd.js/dist/css/shepherd.css";
 import "./styles.css"; 
 
-const API_BASE_URL = "http://localhost:3001";
+const API_BASE_URL = "https://content-hub-uz2s.onrender.com";
 
 const SearchIcon = (props) => (
   <svg
