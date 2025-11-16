@@ -2,66 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import Shepherd from "shepherd.js";
 import "shepherd.js/dist/css/shepherd.css";
 import "./styles.css"; 
-const DOCUMENTS = [
-  {
-    id: "doc-001",
-    title: "Q3 2024 Product Launch Strategy",
-    content:
-      'Details the core messaging, target audiences, and planned communication channels for the new "Nova" software feature. Focuses heavily on the ROI calculation and competitor analysis.',
-    format: "PDF",
-    category: "Product/Project",
-    team: "Strategy",
-    link: "/sample.pdf",
-    date: "2024-09-15",
-  },
-  {
-    id: "doc-002",
-    title: "Brand Voice Guidelines V2.1",
-    content:
-      "The official style guide defining tone, approved terminology, and legal disclaimers for all external communications. Essential for consistent messaging.",
-    format: "DOCX",
-    category: "Assets/Guidelines",
-    team: "Creative",
-    link: "/sample.pdf",
-    date: "2023-11-01",
-  },
-  {
-    id: "doc-003",
-    title: "Social Media Ad Copy Templates",
-    content:
-      "Collection of high-performing headline and body copy templates for Facebook, Instagram, and LinkedIn. Includes A/B testing results from last campaign cycle.",
-    format: "XLSX",
-    category: "Campaign",
-    team: "DemandGen",
-    link: "/sample.pdf",
-    date: "2024-08-20",
-  },
-  {
-    id: "doc-004",
-    title: "Sales Enablement Deck - Core Features",
-    content:
-      "The primary presentation deck used by the sales team. Covers technical specifications and customer success stories. Make sure this is always the latest version.",
-    format: "PPTX",
-    category: "Sales/Training",
-    team: "Content",
-    link: "/sample.pdf",
-    date: "2024-10-05",
-  },
-  {
-    id: "doc-005",
-    title: "Executive Summary: 2025 Budget Proposal",
-    content:
-      "High-level financial overview for next year, focusing on new technology investments and team hiring plans. Top-level management review required.",
-    format: "PDF",
-    category: "Strategy",
-    team: "Finance",
-    link: "/sample.pdf",
-    date: "2024-10-25",
-  },
-];
 
-const ALL_CATEGORIES = ["All", ...new Set(DOCUMENTS.map((d) => d.category))];
-
+const API_BASE_URL = "https://content-hub-uz2s.onrender.com";
 
 const SearchIcon = (props) => (
   <svg
@@ -210,7 +152,6 @@ const HelpCircleIcon = (props) => (
   </svg>
 );
 
-
 const DocumentIcon = ({ format }) => {
   let iconClass = "text-gray-500";
   let label = format || "FILE";
@@ -317,7 +258,6 @@ const FeedbackForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setStatus("sending");
-
 
     setTimeout(() => {
       if (message && message.trim().length > 0) {
@@ -457,7 +397,6 @@ const AppFooter = () => {
   );
 };
 
-
 const initializeTour = () => {
   try {
     if (!Shepherd) {
@@ -533,8 +472,6 @@ const initializeTour = () => {
   }
 };
 
-
-
 const WelcomeScreen = ({ onStartTour }) => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -555,12 +492,12 @@ const WelcomeScreen = ({ onStartTour }) => {
   );
 };
 
-
 const App = () => {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState(DOCUMENTS.slice().sort((a, b) => new Date(b.date) - new Date(a.date)));
+  const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [categories, setCategories] = useState(["All"]);
   const [showWelcome, setShowWelcome] = useState(false);
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -572,20 +509,16 @@ const App = () => {
     }
   });
 
-
   const tourRef = React.useRef(null);
 
- 
   useEffect(() => {
     const hasVisited = localStorage.getItem("hasVisitedContentHub");
     if (hasVisited !== "true") {
-
       const t = setTimeout(() => setShowWelcome(true), 120);
       return () => clearTimeout(t);
     }
     return undefined;
   }, []);
-
   
   useEffect(() => {
     const root = window.document.documentElement;
@@ -595,39 +528,47 @@ const App = () => {
     try {
       localStorage.setItem("darkMode", isDarkMode ? "true" : "false");
     } catch (err) {
-     
       console.error("Could not persist dark mode:", err);
     }
   }, [isDarkMode]);
 
-  const performSearch = useCallback((q, category) => {
-    let filtered = DOCUMENTS.slice();
-    const ql = (q || "").toLowerCase().trim();
-    if (category && category !== "All") filtered = filtered.filter((d) => d.category === category);
-    if (ql) {
-      filtered = filtered.filter(
-        (d) => d.title.toLowerCase().includes(ql) || d.content.toLowerCase().includes(ql) || d.team.toLowerCase().includes(ql)
-      );
+  const performSearch = useCallback(async (q, category) => {
+    try {
+      setLoading(true);
+      
+      const params = new URLSearchParams();
+      if (q) params.append('q', q);
+      if (category && category !== 'All') params.append('category', category);
+      
+      const response = await fetch(`${API_BASE_URL}/api/search?${params}`);
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      setResults(data.results || []);
+      if (data.categories) {
+        setCategories(['All', ...data.categories.filter(cat => cat !== 'All')]);
+      }
+    } catch (error) {
+      console.error('Search API error:', error);
+      setResults([]);
+    } finally {
+      setLoading(false);
     }
-    filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
-    return filtered;
   }, []);
 
-  
   useEffect(() => {
-    setLoading(true);
-   
     const t = setTimeout(() => {
-      const res = performSearch(query, selectedCategory);
-      setResults(res);
-      setLoading(false);
-    }, 120);
+      performSearch(query, selectedCategory);
+    }, 300);
+    
     return () => clearTimeout(t);
   }, [query, selectedCategory, performSearch]);
 
-  
   useEffect(() => {
-    
     if (!tourRef.current) tourRef.current = initializeTour();
 
     const t = tourRef.current;
@@ -637,7 +578,7 @@ const App = () => {
       try {
         localStorage.setItem("hasVisitedContentHub", "true");
       } catch (e) {
-       
+        // Ignore storage errors
       }
     };
 
@@ -649,15 +590,13 @@ const App = () => {
         t.off("complete", onCompleteOrCancel);
         t.off("cancel", onCompleteOrCancel);
       } catch (e) {
-        
+        // Ignore errors
       }
     };
   }, []);
 
-  
   const startTour = () => {
     setShowWelcome(false);
-   
     if (!tourRef.current) tourRef.current = initializeTour();
     if (tourRef.current) {
       try {
@@ -698,8 +637,6 @@ const App = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 font-sans transition-colors duration-300 flex flex-col">
       
       <style>{`
-        /* Tailwind dark mode assumed configured in your build.
-           These small helpers duplicate previous inline CSS you used. */
         .animate-bounce-slow { animation: bounce-slow 4s infinite; }
         @keyframes bounce-slow { 0%,100% { transform: translateY(-5%); } 50% { transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.45s ease-out; }
@@ -738,7 +675,6 @@ const App = () => {
           </button>
         </div>
 
-    
         <div id="tour-search-bar" className="relative mb-8 shadow-xl rounded-2xl bg-white dark:bg-gray-800 transition-all duration-300">
           <div className="p-4 flex items-center border border-gray-200 dark:border-gray-700 rounded-2xl focus-within:ring-4 focus-within:ring-indigo-100 dark:focus-within:ring-indigo-800 transition-all duration-300">
             <span className="absolute left-6 flex items-center pointer-events-none">
@@ -756,9 +692,8 @@ const App = () => {
           </div>
         </div>
 
-     
         <div id="tour-filters" className="mt-8 flex flex-wrap gap-3">
-          {ALL_CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => handleCategoryClick(cat)}
@@ -769,7 +704,6 @@ const App = () => {
           ))}
         </div>
 
-  
         <div id="tour-content-area" className="mt-10 pb-20">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Results ({loading ? "..." : results.length})</h2>
 
