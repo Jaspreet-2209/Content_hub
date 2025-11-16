@@ -3,7 +3,7 @@ import Shepherd from "shepherd.js";
 import "shepherd.js/dist/css/shepherd.css";
 import "./styles.css"; 
 
-const API_BASE_URL = "https://content-hub-uz2s.onrender.com";
+const API_BASE_URL = "http://localhost:3001";
 
 const SearchIcon = (props) => (
   <svg
@@ -217,7 +217,7 @@ const DocumentCard = ({ doc }) => {
       </div>
       <div className="flex-shrink-0 flex items-center justify-end">
         <a
-          href={doc.link}
+          href="./sample.pdf"
           target="_blank"
           rel="noopener noreferrer"
           className="bg-indigo-600 text-white px-4 py-2 rounded-full font-semibold text-sm shadow-md hover:bg-indigo-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
@@ -225,6 +225,7 @@ const DocumentCard = ({ doc }) => {
           View / Preview
         </a>
       </div>
+      
     </div>
   );
 };
