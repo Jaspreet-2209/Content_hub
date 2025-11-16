@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+.loader {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.slide-in {
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dark .shepherd-element,
+.dark .shepherd-content,
+.dark .shepherd-text,
+.dark .shepherd-header,
+.dark .shepherd-title {
+  color: #ffffff !important;
+}
+
+.dark .shepherd-element .shepherd-content {
+  background: #1e1e1e !important;
+  border-color: #444 !important;
+}
+
+.dark .shepherd-arrow:before {
+  background: #1e1e1e !important;
+}
+
